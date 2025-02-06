@@ -231,7 +231,7 @@ router.put("/api/forgot-password", async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Password has been updated successfully.",
+      message: "Recovery account successfully.",
     });
   } catch (error) {
     console.error("Error:", error);
