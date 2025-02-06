@@ -12,8 +12,41 @@ const router = express.Router();
 // Create a new font design
 router.post("/api/font-design", authenticateToken, async (req, res) => {
   try {
-    const { font1_id, font2_id, brand_id, group,isDevelope } = req.body;
+    const { font1_id, font2_id, brand_id, group, isDevelope } = req.body;
 
+    if (!font1_id || !font2_id || !brand_id || !group || isDevelope === undefined) {
+      return res.status(400).json({
+        message: "Please provide all required fields",
+      });
+    }
+
+    // Cek apakah sudah ada group yang sama dalam brand_id yang sama
+    const { data: existingGroup, error: selectError } = await supabase
+      .from("font_designs")
+      .select("id") // Hanya pilih id karena tidak butuh data lengkap
+      .eq("brand_id", brand_id)
+      .eq("group", group)
+      .limit(1)
+      .single();
+
+    if (selectError && selectError.code !== "PGRST116") {
+      // Abaikan error jika data tidak ditemukan
+      console.error("Select error:", selectError);
+      return res.status(500).json({
+        success: false,
+        message: "Error checking existing group",
+      });
+    }
+
+    // Jika sudah ada, kembalikan error
+    if (existingGroup) {
+      return res.status(400).json({
+        success: false,
+        message: "Group with the same name already exists in this brand",
+      });
+    }
+
+    // Insert data baru ke dalam database
     const { data: fontDesigns, error: insertError } = await supabase
       .from("font_designs")
       .insert({
@@ -21,7 +54,7 @@ router.post("/api/font-design", authenticateToken, async (req, res) => {
         font2_id,
         brand_id,
         group,
-        is_develope: isDevelope
+        is_develope: isDevelope,
       })
       .select("*");
 
@@ -48,7 +81,7 @@ router.post("/api/font-design", authenticateToken, async (req, res) => {
 });
 
 // Retrieve all font designs
-router.get("/api/font-design",authenticateToken, async (req, res) => {
+router.get("/api/font-design", authenticateToken, async (req, res) => {
   try {
     const { data: fontDesigns, error: getError } = await supabase
       .from("font_designs")
@@ -85,7 +118,7 @@ router.get("/api/font-design",authenticateToken, async (req, res) => {
 });
 
 // Retrieve font design by ID
-router.get("/api/font-design-id",authenticateToken, async (req, res) => {
+router.get("/api/font-design-id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.query;
 
@@ -96,12 +129,17 @@ router.get("/api/font-design-id",authenticateToken, async (req, res) => {
       });
     }
 
-    const { data: fontDesign, error: getError } = await supabase.from("font_designs").select( `
+    const { data: fontDesign, error: getError } = await supabase
+      .from("font_designs")
+      .select(
+        `
       *,
       font1:fonts!font_designs_font_id_fkey(*),
       font2:fonts!font_designs_font2_id_fkey(*),
       brands(*)
-    `).eq("font_designs_id", id);
+    `
+      )
+      .eq("font_designs_id", id);
 
     if (getError) {
       console.error("Get error:", getError);
@@ -153,7 +191,7 @@ router.put("/api/font-design", authenticateToken, async (req, res) => {
         font2_id,
         brand_id,
         group,
-        is_develope: isDevelope
+        is_develope: isDevelope,
       })
       .eq("font_designs_id", id)
       .select("*");

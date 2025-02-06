@@ -15,6 +15,34 @@ router.post("/api/ai-builder", async (req, res) => {
     const { siteTitle, brandID, fontID, colorID, userID } = req.body;
     const created_at = moment().tz("Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss");
 
+    if (!siteTitle || !brandID || !fontID || !colorID || !userID) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required fields",
+      });
+    }
+
+    // Cek apakah siteTitle sudah ada
+    const { data: existingSite, error: selectError } = await supabase.from("ai_builders").select("id").eq("site_title", siteTitle).limit(1).single();
+
+    if (selectError && selectError.code !== "PGRST116") {
+      // Abaikan error jika data tidak ditemukan
+      console.error("Select error:", selectError);
+      return res.status(500).json({
+        success: false,
+        message: "Error checking existing site title",
+      });
+    }
+
+    // Jika siteTitle sudah ada, kembalikan error
+    if (existingSite) {
+      return res.status(400).json({
+        success: false,
+        message: "Site title already exists. Please choose another title.",
+      });
+    }
+
+    // Insert data baru ke dalam database
     const { data: aiBuilder, error: insertError } = await supabase
       .from("ai_builders")
       .insert({
@@ -38,7 +66,7 @@ router.post("/api/ai-builder", async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Ai Builder has been added",
+      message: "AI Builder has been added",
       data: aiBuilder,
     });
   } catch (error) {
@@ -156,6 +184,30 @@ router.delete("/api/ai-builder", authenticateToken, async (req, res) => {
         message: "Ai Builder ID is required",
       });
     }
+
+    const { data: aiBuilerSection, error: deleteErrorSection } = await supabase.from("ai_builder_sections").delete().eq("ai_builder_id", id);
+
+    if (deleteErrorSection) {
+      console.error("Delete error:", deleteErrorSection);
+      return res.status(500).json({
+        success: false,
+        message: deleteErrorSection.message,
+      });
+    }
+
+    console.log("aiBuilerSection", aiBuilerSection);
+
+    const { data: aiBuilderSupport, error: deleteErrorSupport } = await supabase.from("ai_builder_supports").delete().eq("ai_builder_id", id);
+
+    if (deleteErrorSupport) {
+      console.error("Delete error:", deleteErrorSupport);
+      return res.status(500).json({
+        success: false,
+        message: deleteErrorSupport.message,
+      });
+    }
+
+    console.log("aiBuilderSupport", aiBuilderSupport);
 
     const { data: aiBuilder, error: deleteError } = await supabase.from("ai_builders").delete().eq("ai_builder_id", id);
 
