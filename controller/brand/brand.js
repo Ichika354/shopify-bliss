@@ -23,6 +23,13 @@ router.post("/api/brand", authenticateToken, async (req, res) => {
 
     const { name, fontClass, fontClassReverse, isDevelope } = req.body;
 
+    if (!name || !fontClass || !fontClassReverse || !isDevelope) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, font class, font class reverse, and is develope are required",
+      })
+    }
+
     const { data: brands, error: insertError } = await supabase
       .from("brands")
       .insert({

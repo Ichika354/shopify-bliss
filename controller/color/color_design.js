@@ -153,6 +153,13 @@ router.put("/api/color-design", authenticateToken, async (req, res) => {
 
     const { color1_id, color2_id, color3_id, brand_id, isDevelope } = req.body;
 
+    if (!color1_id || !color2_id || !color3_id || !brand_id || isDevelope === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "Bad request: All fields are required",
+      });
+    }
+
     const { data: colorDesign, error: updateError } = await supabase
       .from("color_designs")
       .update({
