@@ -151,7 +151,7 @@ router.put("/api/color-design", authenticateToken, async (req, res) => {
       });
     }
 
-    const { color1_id, color2_id, color3_id, brand_id } = req.body;
+    const { color1_id, color2_id, color3_id, brand_id, isDevelope } = req.body;
 
     const { data: colorDesign, error: updateError } = await supabase
       .from("color_designs")
@@ -160,6 +160,7 @@ router.put("/api/color-design", authenticateToken, async (req, res) => {
         color2_id,
         color3_id,
         brand_id,
+        is_develope: isDevelope,
       })
       .eq("color_design_id", id)
       .select("*");

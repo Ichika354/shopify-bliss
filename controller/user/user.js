@@ -82,10 +82,12 @@ router.post("/api/send-otp", async (req, res) => {
   }
 });
 
-router.put("/api/update-password", async (req, res) => {
+router.put("/api/update-password", authenticateToken, async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
     const userID = req.user.user_id;
+
+    console.log("User ID:", userID);
 
     // Validasi input
     if (!oldPassword || !newPassword) {
@@ -101,12 +103,6 @@ router.put("/api/update-password", async (req, res) => {
       });
     }
 
-    // Pastikan OTP sudah diverifikasi
-    if (user.verification_code !== null) {
-      return res.status(400).json({
-        message: "You must verify your OTP before updating your password.",
-      });
-    }
 
     // Verifikasi password lama
     const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
