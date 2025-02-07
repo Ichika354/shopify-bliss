@@ -23,7 +23,7 @@ router.post("/api/ai-builder", async (req, res) => {
     }
 
     // Cek apakah siteTitle sudah ada
-    const { data: existingSite, error: selectError } = await supabase.from("ai_builders").select("id").eq("site_title", siteTitle).limit(1).single();
+    const { data: existingSite, error: selectError } = await supabase.from("ai_builders").select("site_title").eq("site_title", siteTitle).limit(1).single();
 
     if (selectError && selectError.code !== "PGRST116") {
       // Abaikan error jika data tidak ditemukan
